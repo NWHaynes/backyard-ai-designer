@@ -466,7 +466,7 @@ export default function YardAIPage() {
         )}
 
         {/* Step 3: Results - Before/After Comparison */}
-        {currentStep === 3 && generatedImages.length > 0 && (
+        {currentStep === 3 && generatedImages.length > 0 && uploadedImage && (
           <div className={`transition-all duration-500 ${
             showComparison ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
           }`}>
