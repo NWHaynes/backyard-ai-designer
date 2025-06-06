@@ -42,7 +42,7 @@ export default function YardAIPage() {
     { emoji: '🌿', label: 'Garden', text: 'Create a beautiful garden with colorful flowers' },
     { emoji: '🌳', label: 'Trees', text: 'Add shade trees around the perimeter' },
     { emoji: '🪑', label: 'Deck', text: 'Add a wooden deck with outdoor furniture' },
-    { emoji: '💡', label: 'Lighting', text: 'Add modern landscape lighting throughout' }
+    { emoji: '��', label: 'Lighting', text: 'Add modern landscape lighting throughout' }
   ]
 
   // Your existing suggestions for fallback
@@ -242,7 +242,7 @@ export default function YardAIPage() {
           <div className="transition-all duration-500 opacity-100 scale-100">
             <div className="text-center mb-8">
               <h2 className="text-4xl font-bold text-gray-800 mb-4">
-                Let's transform your backyard
+                Let&apos;s transform your backyard
               </h2>
               <p className="text-xl text-gray-600">
                 Upload a photo to get started with AI-powered design
@@ -269,6 +269,7 @@ export default function YardAIPage() {
                 </div>
                 <div className="p-6">
                   <div className="aspect-video bg-gray-100 rounded-2xl overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={uploadedImage}
                       alt="Your uploaded backyard"
@@ -298,7 +299,7 @@ export default function YardAIPage() {
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe your vision... (e.g., 'Add a cozy fire pit area with comfortable seating and string lights')"
+                  placeholder="Describe your vision... (e.g., &apos;Add a cozy fire pit area with comfortable seating and string lights&apos;)"
                   className="w-full h-40 p-6 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-gray-700 text-lg"
                 />
 
@@ -388,6 +389,7 @@ export default function YardAIPage() {
                 </div>
                 <div className="p-6">
                   <div className="aspect-video bg-gray-100 rounded-2xl overflow-hidden relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={uploadedImage}
                       alt="Your uploaded backyard being analyzed"
@@ -487,6 +489,7 @@ export default function YardAIPage() {
                       Before
                     </div>
                     <div className="h-96 bg-gray-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={uploadedImage}
                         alt="Before transformation"
@@ -507,6 +510,7 @@ export default function YardAIPage() {
                       <Maximize2 className="w-5 h-5" />
                     </div>
                     <div className="h-96 bg-gray-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={generatedImages[0]}
                         alt="After transformation"
@@ -597,6 +601,7 @@ export default function YardAIPage() {
                 <X className="w-6 h-6" />
               </button>
             </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={expandedImage}
               alt="Expanded dream yard design"
