@@ -156,8 +156,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload }) => {
     }
   }
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault()
+  const handleClick = () => {
+    if (isUploading) return
+    
     console.log('Upload area clicked')
     
     // Reset the input value to ensure onChange fires even for the same file
@@ -201,7 +202,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload }) => {
             type="file"
             accept="image/*"
             onChange={handleChange}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            className="hidden"
             disabled={isUploading}
           />
           
