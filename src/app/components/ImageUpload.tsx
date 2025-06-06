@@ -61,16 +61,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload }) => {
       }
       
       img.onerror = () => reject(new Error('Failed to load image'))
-      
-      // Create object URL and load image
-      const objectUrl = URL.createObjectURL(file)
-      img.src = objectUrl
-      
-      // Clean up object URL after image loads
-      img.onload = () => {
-        URL.revokeObjectURL(objectUrl)
-        img.onload() // Call the original onload
-      }
+      img.src = URL.createObjectURL(file)
     })
   }
 
