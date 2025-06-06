@@ -42,7 +42,7 @@ export default function YardAIPage() {
     { emoji: '🌿', label: 'Garden', text: 'Create a beautiful garden with colorful flowers' },
     { emoji: '🌳', label: 'Trees', text: 'Add shade trees around the perimeter' },
     { emoji: '🪑', label: 'Deck', text: 'Add a wooden deck with outdoor furniture' },
-    { emoji: '��', label: 'Lighting', text: 'Add modern landscape lighting throughout' }
+    { emoji: '💡', label: 'Lighting', text: 'Add modern landscape lighting throughout' }
   ]
 
   // Your existing suggestions for fallback
@@ -367,7 +367,7 @@ export default function YardAIPage() {
 
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                   <p className="text-sm text-green-700 text-center">
-                    🎯 <strong>Enhanced:</strong> AI prompting for realistic results that preserve your yard's layout!
+                    🎯 <strong>Enhanced:</strong> AI prompting for realistic results that preserve your yard&apos;s layout!
                   </p>
                 </div>
               </div>
