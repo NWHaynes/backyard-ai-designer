@@ -166,7 +166,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
 
                 {/* The actual image using blob URL */}
                 {blobUrl && (
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={blobUrl}
                     alt={`Generated backyard design ${index + 1}`}
