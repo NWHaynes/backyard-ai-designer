@@ -173,7 +173,7 @@ export default function Home() {
               
               <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-xs text-green-700">
-                  🎯 <strong>New:</strong> Enhanced AI prompting for more realistic results that preserve your yard's layout and proportions!
+                  🎯 <strong>New:</strong> Enhanced AI prompting for more realistic results that preserve your yard&apos;s layout and proportions!
                 </p>
               </div>
             </div>

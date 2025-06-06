@@ -82,7 +82,7 @@ export default function ChatInterface({ onGenerate, isLoading, disabled }: ChatI
 
         {disabled && (
           <p className="text-red-500 text-sm">
-            You've reached the 10 generation limit for this session.
+            You&apos;ve reached the 10 generation limit for this session.
           </p>
         )}
 

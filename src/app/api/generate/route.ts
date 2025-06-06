@@ -40,7 +40,7 @@ function processBackyardRequest(userPrompt: string): string {
   // Common transformation patterns with enhanced instructions
   const enhancements: { [key: string]: string } = {
     'grass': 'Replace existing ground surface with lush, healthy green grass while maintaining exact layout and keeping all furniture, paths, and structures in their current positions',
-    'pool': 'Add a swimming pool in an appropriate central location, ensuring it fits naturally within the existing space proportions and doesn\'t interfere with current furniture placement',
+    'pool': 'Add a swimming pool in an appropriate central location, ensuring it fits naturally within the existing space proportions and does not interfere with current furniture placement',
     'fire pit': 'Add a fire pit with surrounding seating area, placed in the most logical central location while maintaining current furniture layout and adding appropriate ground treatment beneath',
     'deck': 'Add a wooden deck structure that integrates naturally with the existing layout, maintaining proper scale and connecting logically to current pathways',
     'patio': 'Create a patio area using materials that complement the existing landscape, maintaining current proportions and furniture placement',
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     console.log('Final prompt preview:', finalPrompt.substring(0, 200) + '...')
 
     console.log('Converting uploaded image to file...')
-    let imageFile = await dataURLtoFile(inputImageUrl, 'backyard.png')
+    const imageFile = await dataURLtoFile(inputImageUrl, 'backyard.png')
     console.log('Original image file size:', imageFile.size, `(${(imageFile.size / 1024 / 1024).toFixed(2)}MB)`)
 
     console.log('Calling gpt-image-1 edit API with enhanced prompt...')
@@ -151,14 +151,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No image data returned from OpenAI' }, { status: 500 })
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('=== ENHANCED PROMPT ERROR ===')
-    console.error('Error message:', error?.message)
-    console.error('Error stack:', error?.stack)
+    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error')
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     console.error('=== END ERROR DETAILS ===')
     
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return NextResponse.json({ 
-      error: `Generation failed: ${error.message}`,
+      error: `Generation failed: ${errorMessage}`,
       details: 'Check server logs for more details'
     }, { status: 500 })
   }

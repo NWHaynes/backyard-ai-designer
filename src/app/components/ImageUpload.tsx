@@ -157,6 +157,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload }) => {
       ) : (
         <div className="space-y-4">
           <div className="relative rounded-lg overflow-hidden border-2 border-green-200">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={uploadedImage}
               alt="Uploaded backyard"

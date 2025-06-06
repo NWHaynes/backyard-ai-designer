@@ -67,7 +67,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
         }
       })
     }
-  }, [images])
+  }, [images]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const downloadImage = async (imageUrl: string, index: number) => {
     try {
@@ -166,6 +166,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
 
                 {/* The actual image using blob URL */}
                 {blobUrl && (
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={blobUrl}
                     alt={`Generated backyard design ${index + 1}`}
