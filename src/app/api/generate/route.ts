@@ -20,15 +20,17 @@ function enhancePrompt(userPrompt: string): string {
 
 2. MATERIAL REPLACEMENTS: When replacing surfaces (gravel→grass, concrete→pavers), overlay new material on same footprint while keeping shape, paths, and objects intact.
 
-3. ADDING ELEMENTS: Place new objects in realistically scaled positions. New fire pits should be centered in seating areas. Trees/shrubs go around perimeter or fence lines unless specified. New elements must visually integrate with existing materials and tone.
+3. ADDING ELEMENTS: Place new objects in realistically scaled positions that make sense for the specific space and user request. Consider the size and layout of the yard when choosing what elements to add. Elements should visually integrate with existing materials and tone.
 
 4. REALISM PRIORITY: No floating objects, distortions, or sudden scale changes. Maintain natural integration where new additions blend seamlessly with existing space.
 
 5. LAYOUT PRESERVATION: Keep furniture, fences, trees, and house in same positions unless explicitly asked to move them.
 
+6. USER-FOCUSED DESIGN: Only add elements that are specifically requested or that directly support the user's stated goals. Do not add decorative elements unless they enhance the specific request.
+
 TRANSFORMATION REQUEST: ${userPrompt}
 
-Execute this transformation while following all preservation rules above. Maintain photorealistic quality with natural lighting and proper proportions.`
+Execute this transformation while following all preservation rules above. Focus specifically on what the user has requested without adding unnecessary elements. Maintain photorealistic quality with natural lighting and proper proportions.`
 
   return systemPrompt
 }
@@ -40,22 +42,34 @@ function processBackyardRequest(userPrompt: string): string {
   // Common transformation patterns with enhanced instructions
   const enhancements: { [key: string]: string } = {
     'grass': 'Replace existing ground surface with lush, healthy green grass while maintaining exact layout and keeping all furniture, paths, and structures in their current positions',
-    'pool': 'Add a swimming pool in an appropriate central location, ensuring it fits naturally within the existing space proportions and does not interfere with current furniture placement',
-    'fire pit': 'Add a fire pit with surrounding seating area, placed in the most logical central location while maintaining current furniture layout and adding appropriate ground treatment beneath',
+    'lawn': 'Replace existing ground surface with lush, healthy green grass while maintaining exact layout and keeping all furniture, paths, and structures in their current positions',
+    'pool': 'Add a swimming pool in an appropriate location that fits naturally within the existing space proportions and doesn\'t interfere with current furniture placement',
+    'swimming pool': 'Add a swimming pool in an appropriate location that fits naturally within the existing space proportions and doesn\'t interfere with current furniture placement',
+    'fire pit': 'Add a fire pit with appropriate seating arrangement, placed in a suitable location while maintaining current furniture layout',
+    'firepit': 'Add a fire pit with appropriate seating arrangement, placed in a suitable location while maintaining current furniture layout',
     'deck': 'Add a wooden deck structure that integrates naturally with the existing layout, maintaining proper scale and connecting logically to current pathways',
     'patio': 'Create a patio area using materials that complement the existing landscape, maintaining current proportions and furniture placement',
-    'trees': 'Add trees and landscaping around the perimeter and along fence lines, ensuring they enhance rather than obstruct the current layout',
+    'trees': 'Add trees and landscaping in appropriate locations that enhance the existing layout without obstructing views or pathways',
+    'plants': 'Add plants and landscaping that complement the existing space and enhance the overall design',
     'flowers': 'Add colorful flower beds and garden areas in natural locations that complement the existing landscape design',
-    'lighting': 'Install landscape lighting that enhances the space while maintaining the current layout and highlighting existing features',
-    'furniture': 'Replace or add outdoor furniture that fits the scale and style of the space while maintaining logical placement and traffic flow'
+    'garden': 'Add garden beds with plants and flowers in locations that enhance the existing landscape design',
+    'lighting': 'Install appropriate landscape lighting that enhances the space while maintaining the current layout and highlighting existing features',
+    'furniture': 'Add or replace outdoor furniture that fits the scale and style of the space while maintaining logical placement and traffic flow',
+    'seating': 'Add appropriate outdoor seating that fits the space and complements the existing layout',
+    'dining': 'Add outdoor dining furniture and setup that fits naturally within the existing space',
+    'entertaining': 'Create an entertaining area with appropriate furniture and layout for the space size and existing features',
+    'modern': 'Transform the space with modern design elements, clean lines, and contemporary materials while preserving the existing layout',
+    'traditional': 'Transform the space with traditional design elements and classic materials while preserving the existing layout',
+    'cozy': 'Create a cozy, intimate atmosphere with appropriate scaled elements for relaxation',
+    'spacious': 'Enhance the sense of space with design choices that make the area feel larger and more open'
   }
   
   // Check for enhancement keywords and apply context
   let enhancedPrompt = userPrompt
   for (const [keyword, enhancement] of Object.entries(enhancements)) {
     if (lowercasePrompt.includes(keyword)) {
-      enhancedPrompt = `${enhancement}. ${userPrompt}`
-      break
+      enhancedPrompt = `${enhancement}. Original request: ${userPrompt}`
+      break // Only apply the first matching enhancement
     }
   }
   
@@ -87,7 +101,7 @@ export async function POST(request: NextRequest) {
     console.log('Final prompt preview:', finalPrompt.substring(0, 200) + '...')
 
     console.log('Converting uploaded image to file...')
-    const imageFile = await dataURLtoFile(inputImageUrl, 'backyard.png')
+    let imageFile = await dataURLtoFile(inputImageUrl, 'backyard.png')
     console.log('Original image file size:', imageFile.size, `(${(imageFile.size / 1024 / 1024).toFixed(2)}MB)`)
 
     console.log('Calling gpt-image-1 edit API with enhanced prompt...')
@@ -151,15 +165,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No image data returned from OpenAI' }, { status: 500 })
     }
 
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('=== ENHANCED PROMPT ERROR ===')
-    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error')
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+    console.error('Error message:', error?.message)
+    console.error('Error stack:', error?.stack)
     console.error('=== END ERROR DETAILS ===')
     
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return NextResponse.json({ 
-      error: `Generation failed: ${errorMessage}`,
+      error: `Generation failed: ${error.message}`,
       details: 'Check server logs for more details'
     }, { status: 500 })
   }
