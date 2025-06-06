@@ -223,7 +223,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload }) => {
               </p>
               <p className="text-gray-500 mb-2">or click to browse files</p>
               <p className="text-sm text-gray-400">
-                Supports JPG, PNG up to 50MB (auto-compressed for optimal processing)
+                 Supported formats: JPG, PNG, GIF (max 50MB)
               </p>
             </div>
           )}
