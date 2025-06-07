@@ -501,7 +501,7 @@ export default function YardAIPage() {
                           {score}/5
                         </div>
                         <div className="text-xs text-gray-600 capitalize">
-                          {category.replace('_', ' ').substring(0, 8)}
+                          {category.replace('_', ' ').substring(0, 12)}
                         </div>
                       </div>
                     ))}
