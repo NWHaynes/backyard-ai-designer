@@ -12,45 +12,79 @@ async function dataURLtoFile(dataurl: string, filename: string): Promise<File> {
   return new File([blob], filename, { type: blob.type })
 }
 
-// BACKYARD IMAGE GENERATION RULEBOOK
-function enhancePrompt(userPrompt: string): string {
-  // System prompt that gets prepended to every user request
-  const systemPrompt = `BACKYARD TRANSFORMATION RULES:
-1. PRESERVE FOUNDATION: Keep exact perspective, camera angle, depth, and horizon line. Maintain geometry and proportions of existing elements (fences, homes, paths, furniture). Preserve lighting, shadows, and visual identity of the property.
+// AI Vision Analysis for personalized prompting
+async function analyzeBackyard(imageUrl: string): Promise<string> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Analyze this backyard for AI image generation. Provide a concise analysis focusing on:
+              - Current style/aesthetic (modern, traditional, rustic, etc.)
+              - Yard size and layout
+              - Existing features and materials
+              - What improvements would work best in THIS specific space
+              
+              Keep response under 200 words, focus on actionable insights for image generation.`
+            },
+            {
+              type: "image_url",
+              image_url: { url: imageUrl }
+            }
+          ]
+        }
+      ],
+      max_tokens: 300,
+      temperature: 0.3
+    })
 
-2. MATERIAL REPLACEMENTS: When replacing surfaces (gravel→grass, concrete→pavers), overlay new material on same footprint while keeping shape, paths, and objects intact.
-
-3. ADDING ELEMENTS: Place new objects in realistically scaled positions. New fire pits should be centered in seating areas. Trees/shrubs go around perimeter or fence lines unless specified. New elements must visually integrate with existing materials and tone.
-
-4. REALISM PRIORITY: No floating objects, distortions, or sudden scale changes. Maintain natural integration where new additions blend seamlessly with existing space.
-
-5. LAYOUT PRESERVATION: Keep furniture, fences, trees, and house in same positions unless explicitly asked to move them.
-
-TRANSFORMATION REQUEST: ${userPrompt}
-
-Execute this transformation while following all preservation rules above. Maintain photorealistic quality with natural lighting and proper proportions.`
-
-  return systemPrompt
+    return response.choices[0].message.content || 'Modern backyard with standard layout'
+  } catch (error) {
+    console.error('Vision analysis failed, using fallback:', error)
+    return 'Well-maintained backyard with potential for enhancement'
+  }
 }
 
-// Enhanced prompt processing for common backyard requests
+// Enhanced prompt with vision analysis
+function createPersonalizedPrompt(userPrompt: string, visionAnalysis: string): string {
+  const enhancedPrompt = `BACKYARD TRANSFORMATION RULES:
+1. PRESERVE FOUNDATION: Keep exact perspective, camera angle, depth, and horizon line. Maintain geometry and proportions of existing elements (fences, homes, paths, furniture). Preserve lighting, shadows, and visual identity.
+
+2. PERSONALIZED CONTEXT: ${visionAnalysis}
+
+3. STYLE INTEGRATION: Ensure new elements complement the existing aesthetic and scale appropriately for this specific yard size and layout.
+
+4. REALISTIC IMPLEMENTATION: No floating objects, distortions, or scale issues. Maintain natural integration where additions blend seamlessly.
+
+5. LAYOUT PRESERVATION: Keep furniture, fences, trees, and structures in current positions unless explicitly asked to move them.
+
+USER TRANSFORMATION REQUEST: ${userPrompt}
+
+Execute this transformation maintaining photorealistic quality with natural lighting that matches existing conditions. Focus on realistic, achievable improvements that enhance rather than replace the yard's character.`
+
+  return enhancedPrompt
+}
+
+// Process common requests (keep your existing logic)
 function processBackyardRequest(userPrompt: string): string {
   const lowercasePrompt = userPrompt.toLowerCase()
   
-  // Common transformation patterns with enhanced instructions
   const enhancements: { [key: string]: string } = {
-    'grass': 'Replace existing ground surface with lush, healthy green grass while maintaining exact layout and keeping all furniture, paths, and structures in their current positions',
-    'pool': 'Add a swimming pool in an appropriate central location, ensuring it fits naturally within the existing space proportions and doesn\'t interfere with current furniture placement',
-    'fire pit': 'Add a fire pit with surrounding seating area, placed in the most logical central location while maintaining current furniture layout and adding appropriate ground treatment beneath',
-    'deck': 'Add a wooden deck structure that integrates naturally with the existing layout, maintaining proper scale and connecting logically to current pathways',
-    'patio': 'Create a patio area using materials that complement the existing landscape, maintaining current proportions and furniture placement',
-    'trees': 'Add trees and landscaping around the perimeter and along fence lines, ensuring they enhance rather than obstruct the current layout',
-    'flowers': 'Add colorful flower beds and garden areas in natural locations that complement the existing landscape design',
-    'lighting': 'Install landscape lighting that enhances the space while maintaining the current layout and highlighting existing features',
-    'furniture': 'Replace or add outdoor furniture that fits the scale and style of the space while maintaining logical placement and traffic flow'
+    'grass': 'Replace existing ground surface with lush, healthy green grass while maintaining exact layout',
+    'pool': 'Add a swimming pool in an appropriate central location that fits naturally within the space',
+    'fire pit': 'Add a fire pit with surrounding seating area in the most logical central location',
+    'deck': 'Add a wooden deck structure that integrates naturally with the existing layout',
+    'patio': 'Create a patio area using materials that complement the existing landscape',
+    'trees': 'Add trees and landscaping around the perimeter and along fence lines',
+    'flowers': 'Add colorful flower beds and garden areas in natural locations',
+    'lighting': 'Install landscape lighting that enhances the space while maintaining current layout',
+    'furniture': 'Replace or add outdoor furniture that fits the scale and style of the space'
   }
   
-  // Check for enhancement keywords and apply context
   let enhancedPrompt = userPrompt
   for (const [keyword, enhancement] of Object.entries(enhancements)) {
     if (lowercasePrompt.includes(keyword)) {
@@ -64,7 +98,7 @@ function processBackyardRequest(userPrompt: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Generate API called - Using enhanced prompting system')
+    console.log('🚀 Generate API called with AI vision analysis')
     const { imageUrl: inputImageUrl, prompt: userPrompt } = await request.json()
 
     if (!inputImageUrl || !userPrompt) {
@@ -77,20 +111,25 @@ export async function POST(request: NextRequest) {
 
     console.log('Original user prompt:', userPrompt)
     
-    // Step 1: Process the user request for common patterns
-    const processedPrompt = processBackyardRequest(userPrompt)
-    console.log('Processed prompt:', processedPrompt)
+    // Step 1: Analyze the backyard with AI vision
+    console.log('🔍 Analyzing backyard with AI vision...')
+    const visionAnalysis = await analyzeBackyard(inputImageUrl)
+    console.log('✅ Vision analysis:', visionAnalysis.substring(0, 100) + '...')
     
-    // Step 2: Enhance with full system rules
-    const finalPrompt = enhancePrompt(processedPrompt)
-    console.log('Final enhanced prompt length:', finalPrompt.length)
-    console.log('Final prompt preview:', finalPrompt.substring(0, 200) + '...')
+    // Step 2: Process user request for common patterns
+    const processedPrompt = processBackyardRequest(userPrompt)
+    
+    // Step 3: Create personalized prompt with vision insights
+    const finalPrompt = createPersonalizedPrompt(processedPrompt, visionAnalysis)
+    console.log('🎯 Final enhanced prompt length:', finalPrompt.length)
+    console.log('📝 Prompt preview:', finalPrompt.substring(0, 200) + '...')
 
-    console.log('Converting uploaded image to file...')
+    // Step 4: Convert image and generate
+    console.log('🖼️ Converting uploaded image to file...')
     const imageFile = await dataURLtoFile(inputImageUrl, 'backyard.png')
-    console.log('Original image file size:', imageFile.size, `(${(imageFile.size / 1024 / 1024).toFixed(2)}MB)`)
+    console.log('📊 Image file size:', `${(imageFile.size / 1024 / 1024).toFixed(2)}MB`)
 
-    console.log('Calling gpt-image-1 edit API with enhanced prompt...')
+    console.log('🎨 Calling GPT-image-1 with personalized prompt...')
     
     const response = await openai.images.edit({
       image: imageFile,
@@ -99,7 +138,7 @@ export async function POST(request: NextRequest) {
       size: "1024x1024"
     })
 
-    console.log('✅ gpt-image-1 edit response received')
+    console.log('✅ GPT-image-1 response received')
 
     if (!response.data || response.data.length === 0) {
       return NextResponse.json({ error: 'No images returned from OpenAI' }, { status: 500 })
@@ -108,7 +147,7 @@ export async function POST(request: NextRequest) {
     const firstImage = response.data[0]
     
     if (firstImage.url) {
-      console.log('✅ Found image URL, downloading and converting...')
+      console.log('📥 Downloading and converting image...')
       
       try {
         const imageResponse = await fetch(firstImage.url)
@@ -124,12 +163,13 @@ export async function POST(request: NextRequest) {
         
         return NextResponse.json({ 
           images: [dataUrl],
-          message: 'Image edited successfully with enhanced prompting',
-          promptUsed: finalPrompt.substring(0, 300) + '...' // Return snippet for debugging
+          message: 'Image generated with AI vision analysis',
+          visionAnalysis: visionAnalysis.substring(0, 200) + '...',
+          promptUsed: finalPrompt.substring(0, 300) + '...'
         })
         
       } catch (fetchError) {
-        console.error('❌ Failed to download image from URL:', fetchError)
+        console.error('❌ Failed to download image:', fetchError)
         return NextResponse.json({ 
           error: 'Failed to download generated image',
           details: 'Could not access the generated image URL'
@@ -137,24 +177,24 @@ export async function POST(request: NextRequest) {
       }
       
     } else if (firstImage.b64_json) {
-      console.log('✅ Found base64 image data, using directly')
+      console.log('✅ Using base64 image data directly')
       
       const dataUrl = `data:image/png;base64,${firstImage.b64_json}`
       return NextResponse.json({ 
         images: [dataUrl],
-        message: 'Image edited successfully with enhanced prompting',
+        message: 'Image generated with AI vision analysis',
+        visionAnalysis: visionAnalysis.substring(0, 200) + '...',
         promptUsed: finalPrompt.substring(0, 300) + '...'
       })
       
     } else {
-      console.log('❌ No image data found. Available properties:', Object.keys(firstImage || {}))
+      console.log('❌ No image data found:', Object.keys(firstImage || {}))
       return NextResponse.json({ error: 'No image data returned from OpenAI' }, { status: 500 })
     }
 
   } catch (error: unknown) {
-    console.error('=== ENHANCED PROMPT ERROR ===')
-    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error')
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+    console.error('=== VISION-ENHANCED GENERATION ERROR ===')
+    console.error('Error:', error instanceof Error ? error.message : 'Unknown error')
     console.error('=== END ERROR DETAILS ===')
     
     return NextResponse.json({ 
