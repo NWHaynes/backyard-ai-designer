@@ -263,7 +263,7 @@ export default function YardAIPage() {
   }
 
   // NEW: Use generated image as new base image
-  const useAsBaseImage = (imageUrl: string) => {
+  const setAsBaseImage = (imageUrl: string) => {
     setUploadedImage(imageUrl)
     setCurrentStep(1)
     setGeneratedImages([])
@@ -869,7 +869,7 @@ export default function YardAIPage() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                useAsBaseImage(generation.image)
+                                setAsBaseImage(generation.image)
                               }}
                               className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-600"
                             >
