@@ -20,6 +20,14 @@ interface BackyardRanking {
   potential_score: number;
 }
 
+interface GenerationHistory {
+  id: string;
+  image: string;
+  prompt: string;
+  timestamp: Date;
+  visionAnalysis?: string;
+}
+
 export default function YardAIPage() {
   // Core state management
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
@@ -39,6 +47,14 @@ export default function YardAIPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [backyardRanking, setBackyardRanking] = useState<BackyardRanking | null>(null)
   const [isRanking, setIsRanking] = useState(false)
+  
+  // Track original base image for before/after comparison
+  const [originalBaseImage, setOriginalBaseImage] = useState<string | null>(null)
+
+  // NEW: Generation History Gallery
+  const [generationHistory, setGenerationHistory] = useState<GenerationHistory[]>([])
+  const [currentMainImage, setCurrentMainImage] = useState<string | null>(null)
+  const [currentMainPrompt, setCurrentMainPrompt] = useState<string>('')
 
   // Steps configuration (updated to 4 steps)
   const steps = [
@@ -159,6 +175,7 @@ export default function YardAIPage() {
   const handleImageUpload = (imageUrl: string) => {
     if (imageUrl) {
       setUploadedImage(imageUrl)
+      setOriginalBaseImage(imageUrl) // Track the true original
       setGeneratedImages([])
       setError(null)
       setAiRecommendations([])
@@ -170,6 +187,7 @@ export default function YardAIPage() {
       setTimeout(() => setCurrentStep(1), 300)
     } else {
       setUploadedImage(null)
+      setOriginalBaseImage(null)
       setGeneratedImages([])
       setAiRecommendations([])
       setBackyardRanking(null)
@@ -205,6 +223,23 @@ export default function YardAIPage() {
       if (data.images && Array.isArray(data.images)) {
         setGeneratedImages(data.images)
         setGenerationCount(prev => prev + 1)
+        
+        // NEW: Add to generation history
+        const newGeneration: GenerationHistory = {
+          id: `gen-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          image: data.images[0],
+          prompt: prompt.trim(),
+          timestamp: new Date(),
+          visionAnalysis: data.detailedAnalysis
+        }
+        
+        setGenerationHistory(prev => [newGeneration, ...prev.slice(0, 19)]) // Keep max 20
+        setCurrentMainImage(data.images[0])
+        setCurrentMainPrompt(prompt.trim())
+        
+        // Clear the prompt for next generation
+        setPrompt('')
+        
         setCurrentStep(3)
         setTimeout(() => setShowComparison(true), 500)
       } else {
@@ -220,9 +255,35 @@ export default function YardAIPage() {
     }
   }
 
-  const handleGenerateAnother = () => {
+  // NEW: Switch main image from history
+  const switchToHistoryImage = (generation: GenerationHistory) => {
+    setCurrentMainImage(generation.image)
+    setCurrentMainPrompt(generation.prompt)
+    setGeneratedImages([generation.image])
+  }
+
+  // NEW: Use generated image as new base image
+  const useAsBaseImage = (imageUrl: string) => {
+    setUploadedImage(imageUrl)
     setCurrentStep(1)
-    setShowComparison(false)
+    setGeneratedImages([])
+    setCurrentMainImage(null)
+    setCurrentMainPrompt('')
+    
+    // Re-analyze the new base image
+    getBackyardRanking(imageUrl)
+    getAIRecommendations(imageUrl)
+  }
+
+  // NEW: Clear generation history
+  const clearHistory = () => {
+    setGenerationHistory([])
+  }
+
+  const handleGenerateAnother = () => {
+    // Don't change the step or clear anything - just stay on results page
+    // The prompt interface is already visible below the history
+    setPrompt('')
   }
 
   const downloadImage = async (imageUrl: string, filename: string = 'backyard-design.png') => {
@@ -261,6 +322,7 @@ export default function YardAIPage() {
   const resetApp = () => {
     setCurrentStep(0)
     setUploadedImage(null)
+    setOriginalBaseImage(null)
     setPrompt('')
     setGeneratedImages([])
     setShowComparison(false)
@@ -268,6 +330,10 @@ export default function YardAIPage() {
     setExpandedImage(null)
     setAiRecommendations([])
     setBackyardRanking(null)
+    // Clear generation history on reset
+    setGenerationHistory([])
+    setCurrentMainImage(null)
+    setCurrentMainPrompt('')
   }
 
   return (
@@ -716,7 +782,7 @@ export default function YardAIPage() {
                     <div className="h-96 bg-gray-100">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={uploadedImage}
+                        src={originalBaseImage || uploadedImage}
                         alt="Before transformation"
                         className="w-full h-full object-cover"
                       />
@@ -725,7 +791,7 @@ export default function YardAIPage() {
                 </div>
 
                 <div className="bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-green-200 group cursor-pointer relative"
-                     onClick={() => setExpandedImage(generatedImages[0])}>
+                     onClick={() => setExpandedImage(currentMainImage || generatedImages[0])}>
                   <div className="relative">
                     <div className="absolute top-6 left-6 bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-full text-xl font-bold z-10">
                       Your Dream Yard!
@@ -736,7 +802,7 @@ export default function YardAIPage() {
                     <div className="h-96 bg-gray-100">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={generatedImages[0]}
+                        src={currentMainImage || generatedImages[0]}
                         alt="After transformation"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -744,40 +810,195 @@ export default function YardAIPage() {
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div className="bg-white rounded-3xl shadow-xl p-6">
-              <div className="flex flex-wrap gap-4 justify-center">
+              
+              {/* Download button aligned right under the output image */}
+              <div className="flex justify-end mt-4">
                 <button 
-                  onClick={handleGenerateAnother}
-                  disabled={isGenerating}
-                  className="flex items-center space-x-2 px-8 py-4 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-xl hover:shadow-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 text-lg font-semibold"
-                >
-                  <RefreshCw className="w-5 h-5" />
-                  <span>Generate Another Variation</span>
-                </button>
-                <button 
-                  onClick={() => downloadImage(generatedImages[0], 'dream-backyard.png')}
-                  className="flex items-center space-x-2 px-8 py-4 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 text-lg font-semibold"
+                  onClick={() => downloadImage(currentMainImage || generatedImages[0], 'dream-backyard.png')}
+                  className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-xl hover:shadow-lg transition-all duration-300 font-semibold"
                 >
                   <Download className="w-5 h-5" />
                   <span>Download</span>
                 </button>
-                <button className="flex items-center space-x-2 px-8 py-4 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 text-lg font-semibold">
-                  <Share2 className="w-5 h-5" />
-                  <span>Share</span>
-                </button>
-              </div>
-
-              <div className="text-center mt-6">
-                <button
-                  onClick={resetApp}
-                  className="text-gray-500 hover:text-gray-700 transition-colors duration-200 text-lg"
-                >
-                  Start a new transformation
-                </button>
               </div>
             </div>
+
+            {/* NEW: Generation History Carousel */}
+            {generationHistory.length > 0 && (
+              <div className="mt-8">
+                <div className="bg-white rounded-3xl shadow-xl p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800 flex items-center">
+                        <Sparkles className="w-5 h-5 mr-2" />
+                        Generation History ({generationHistory.length})
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {currentMainPrompt && `Current: "${currentMainPrompt.length > 50 ? currentMainPrompt.substring(0, 50) + '...' : currentMainPrompt}"`}
+                      </p>
+                    </div>
+                    <button
+                      onClick={clearHistory}
+                      className="text-gray-400 hover:text-red-500 transition-colors text-sm"
+                    >
+                      Clear History
+                    </button>
+                  </div>
+
+                  {/* Horizontal Scrolling Carousel */}
+                  <div className="overflow-x-auto">
+                    <div className="flex gap-4 pb-4" style={{ width: 'max-content' }}>
+                      {generationHistory.map((generation, index) => (
+                        <div
+                          key={generation.id}
+                          className={`flex-shrink-0 transition-all duration-300 ${
+                            currentMainImage === generation.image 
+                              ? 'ring-4 ring-blue-500 ring-opacity-50' 
+                              : 'hover:ring-2 hover:ring-gray-300'
+                          }`}
+                        >
+                          <div className="relative group">
+                            <div 
+                              className="bg-gray-100 rounded-xl overflow-hidden cursor-pointer" 
+                              style={{ width: '200px', height: '120px' }}
+                              onClick={() => switchToHistoryImage(generation)}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={generation.image}
+                                alt={`Generation ${generationHistory.length - index}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            
+                            {/* NEW: Use as Base Image button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                useAsBaseImage(generation.image)
+                              }}
+                              className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-600"
+                            >
+                              Use as Base
+                            </button>
+                          </div>
+                          
+                          <div className="mt-2 px-2">
+                            <div className="text-xs text-gray-500 mb-1">
+                              Gen {generationHistory.length - index} • {generation.timestamp.toLocaleTimeString()}
+                            </div>
+                            <div 
+                              className="text-xs text-gray-700 leading-tight cursor-pointer"
+                              style={{ 
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                                maxWidth: '180px'
+                              }}
+                              title={generation.prompt}
+                              onClick={() => switchToHistoryImage(generation)}
+                            >
+                              {generation.prompt}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Carousel Instructions */}
+                  <div className="text-center text-sm text-gray-500 mt-2">
+                    Click any image to make it the main result • Use "Use as Base" to build upon previous generations
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* NEW: Prompt Interface directly under Generation History */}
+            {currentStep === 3 && (
+              <div className="mt-8 bg-white rounded-3xl shadow-xl p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-gray-800 flex items-center">
+                    <Sparkles className="w-6 h-6 mr-3" />
+                    Create Another Variation
+                  </h3>
+                </div>
+
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Describe your next vision... (e.g., 'Add more tropical plants and a water feature')"
+                  className="w-full h-32 p-6 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-gray-700 text-lg mb-6"
+                />
+
+                {/* Enhanced Style Presets */}
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold text-gray-700 mb-4">Quick Styles</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {stylePresets.map((preset, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setPrompt(preset.prompt)}
+                        className="flex items-center space-x-3 p-4 border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group"
+                      >
+                        {preset.icon}
+                        <span className="text-base font-medium group-hover:text-blue-700">{preset.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* EXPANDED Quick Elements */}
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold text-gray-700 mb-4">Add Features</h4>
+                  <div className="flex flex-wrap gap-3">
+                    {[
+                      { emoji: '🔥', label: 'Fire Pit', text: 'Install a beautiful fire pit area with surrounding comfortable seating for cozy evenings' },
+                      { emoji: '🏊', label: 'Pool', text: 'Add a swimming pool with proper decking and elegant pool furniture' },
+                      { emoji: '🌿', label: 'Garden', text: 'Create beautiful garden beds with colorful flowers and well-organized plant arrangements' },
+                      { emoji: '🌳', label: 'Trees', text: 'Add shade trees and decorative trees around the perimeter for natural beauty' },
+                      { emoji: '🪑', label: 'Deck', text: 'Build a wooden deck with outdoor dining and entertainment area' },
+                      { emoji: '💡', label: 'Lighting', text: 'Install modern landscape lighting throughout for beautiful evening ambiance' },
+                      { emoji: '🍖', label: 'BBQ', text: 'Add a built-in BBQ grill area with outdoor kitchen features and prep space' },
+                      { emoji: '💧', label: 'Waterfall', text: 'Install a stunning waterfall feature with natural stone and flowing water' },
+                      { emoji: '⛲', label: 'Fountain', text: 'Add an elegant fountain as a centerpiece with beautiful water features' },
+                      { emoji: '🗿', label: 'Statues', text: 'Place decorative statues and sculptures throughout for artistic flair' },
+                      { emoji: '🌺', label: 'Tropical', text: 'Create a tropical paradise with palm trees, exotic plants, and vibrant colors' },
+                      { emoji: '🧘', label: 'Zen', text: 'Design a peaceful zen garden with meditation areas, bamboo, and tranquil elements' }
+                    ].map((element, index) => (
+                      <button
+                        key={index}
+                        onClick={() => addToPrompt(element.text)}
+                        className="flex items-center space-x-2 px-4 py-3 bg-gray-100 rounded-full hover:bg-blue-100 transition-colors duration-200 text-base group"
+                      >
+                        <span className="text-lg">{element.emoji}</span>
+                        <span className="font-medium group-hover:text-blue-700">{element.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleGenerate}
+                  disabled={!prompt.trim() || isGenerating}
+                  className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-5 rounded-2xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all duration-300 hover:scale-[1.02] flex items-center justify-center space-x-3"
+                >
+                  <Zap className="w-6 h-6" />
+                  <span>Generate Next Variation</span>
+                  <ArrowRight className="w-6 h-6" />
+                </button>
+
+                <div className="text-center mt-6">
+                  <button
+                    onClick={resetApp}
+                    className="text-gray-500 hover:text-gray-700 transition-colors duration-200 text-lg"
+                  >
+                    Start a new transformation
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -831,6 +1052,10 @@ export default function YardAIPage() {
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
               <h3 className="text-white text-2xl font-bold mb-2">Your AI-Enhanced Dream Backyard</h3>
+              {/* Show prompt if it's from history */}
+              {currentMainPrompt && expandedImage === currentMainImage && (
+                <p className="text-white/90 text-sm mb-3">"{currentMainPrompt}"</p>
+              )}
               <button
                 onClick={() => downloadImage(expandedImage, 'dream-backyard-full.png')}
                 className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all duration-300 flex items-center space-x-2"
