@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Camera, Sparkles, ArrowRight, RefreshCw, Download, Share2, Zap, TreePine, Waves, Home, Sun, ChevronRight, X, Maximize2, Star } from 'lucide-react'
+import { Camera, Sparkles, ArrowRight, RefreshCw, Download, Zap, TreePine, Waves, Home, Sun, ChevronRight, X, Maximize2, Star } from 'lucide-react'
 import ImageUpload from './components/ImageUpload'
 import ImageGallery from './components/ImageGallery'
 
@@ -278,12 +278,6 @@ export default function YardAIPage() {
   // NEW: Clear generation history
   const clearHistory = () => {
     setGenerationHistory([])
-  }
-
-  const handleGenerateAnother = () => {
-    // Don't change the step or clear anything - just stay on results page
-    // The prompt interface is already visible below the history
-    setPrompt('')
   }
 
   const downloadImage = async (imageUrl: string, filename: string = 'backyard-design.png') => {
@@ -834,7 +828,7 @@ export default function YardAIPage() {
                         Generation History ({generationHistory.length})
                       </h3>
                       <p className="text-sm text-gray-600">
-                        {currentMainPrompt && `Current: "${currentMainPrompt.length > 50 ? currentMainPrompt.substring(0, 50) + '...' : currentMainPrompt}"`}
+                        {currentMainPrompt && `Current: &ldquo;${currentMainPrompt.length > 50 ? currentMainPrompt.substring(0, 50) + '...' : currentMainPrompt}&rdquo;`}
                       </p>
                     </div>
                     <button
@@ -909,7 +903,7 @@ export default function YardAIPage() {
 
                   {/* Carousel Instructions */}
                   <div className="text-center text-sm text-gray-500 mt-2">
-                    Click any image to make it the main result • Use "Use as Base" to build upon previous generations
+                    Click any image to make it the main result • Use &ldquo;Use as Base&rdquo; to build upon previous generations
                   </div>
                 </div>
               </div>
@@ -1054,7 +1048,7 @@ export default function YardAIPage() {
               <h3 className="text-white text-2xl font-bold mb-2">Your AI-Enhanced Dream Backyard</h3>
               {/* Show prompt if it's from history */}
               {currentMainPrompt && expandedImage === currentMainImage && (
-                <p className="text-white/90 text-sm mb-3">"{currentMainPrompt}"</p>
+                <p className="text-white/90 text-sm mb-3">&ldquo;{currentMainPrompt}&rdquo;</p>
               )}
               <button
                 onClick={() => downloadImage(expandedImage, 'dream-backyard-full.png')}
