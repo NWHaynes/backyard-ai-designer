@@ -5,8 +5,23 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
+interface BackyardRanking {
+  overall_score: number;
+  overall_grade: string;
+  condition_scores: {
+    maintenance: number;
+    cleanliness: number;
+    plant_health: number;
+    structural_condition: number;
+  };
+  summary: string;
+  top_strengths: string[];
+  improvement_priorities: string[];
+  potential_score: number;
+}
+
 // Comprehensive backyard ranking using GPT-4o Vision
-async function rankBackyard(imageUrl: string): Promise<any> {
+async function rankBackyard(imageUrl: string): Promise<BackyardRanking> {
   try {
     console.log('🖼️ Processing image URL length:', imageUrl.length)
     console.log('🖼️ Image URL starts with:', imageUrl.substring(0, 30))
@@ -108,11 +123,11 @@ RESPOND IN THIS EXACT JSON FORMAT:
     console.log('📝 Raw OpenAI response:', content)
     
     try {
-      const parsed = JSON.parse(content || '{}')
+      const parsed = JSON.parse(content || '{}') as Partial<BackyardRanking>
       console.log('✅ Successfully parsed JSON response')
       
       // Validate and sanitize the response
-      const ranking = {
+      const ranking: BackyardRanking = {
         overall_score: Math.max(1, Math.min(5, parsed.overall_score || 3)),
         overall_grade: parsed.overall_grade || 'B',
         condition_scores: {

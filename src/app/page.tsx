@@ -1,9 +1,24 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Camera, Sparkles, ArrowRight, RefreshCw, Download, Share2, Zap, TreePine, Waves, Home, Sun, ChevronRight, X, Maximize2, Star, Upload, Wand2, ArrowLeft } from 'lucide-react'
+import { Camera, Sparkles, ArrowRight, RefreshCw, Download, Share2, Zap, TreePine, Waves, Home, Sun, ChevronRight, X, Maximize2, Star } from 'lucide-react'
 import ImageUpload from './components/ImageUpload'
 import ImageGallery from './components/ImageGallery'
+
+interface BackyardRanking {
+  overall_score: number;
+  overall_grade: string;
+  condition_scores: {
+    maintenance: number;
+    cleanliness: number;
+    plant_health: number;
+    structural_condition: number;
+  };
+  summary: string;
+  top_strengths: string[];
+  improvement_priorities: string[];
+  potential_score: number;
+}
 
 export default function YardAIPage() {
   // Core state management
@@ -22,7 +37,7 @@ export default function YardAIPage() {
   // New AI features state
   const [aiRecommendations, setAiRecommendations] = useState<string[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [backyardRanking, setBackyardRanking] = useState<any>(null)
+  const [backyardRanking, setBackyardRanking] = useState<BackyardRanking | null>(null)
   const [isRanking, setIsRanking] = useState(false)
 
   // Steps configuration (updated to 4 steps)
@@ -110,7 +125,7 @@ export default function YardAIPage() {
       if (response.ok) {
         const data = await response.json()
         const recommendations = data.recommendations || []
-        const processedRecommendations = recommendations.map((rec: any) => {
+        const processedRecommendations = recommendations.map((rec: string | { suggestion?: string; text?: string; details?: string }) => {
           if (typeof rec === 'object' && rec !== null) {
             return rec.suggestion || rec.text || rec.details || JSON.stringify(rec)
           }
@@ -412,9 +427,9 @@ export default function YardAIPage() {
                     {Object.entries(backyardRanking.condition_scores || {}).map(([category, score]) => (
                       <div key={category} className="bg-white rounded-lg p-2 border border-slate-200 text-center">
                         <div className={`text-lg font-bold ${
-                          score >= 4 ? 'text-green-600' :
-                          score >= 3 ? 'text-blue-600' :
-                          score >= 2 ? 'text-yellow-600' :
+                          (score as number) >= 4 ? 'text-green-600' :
+                          (score as number) >= 3 ? 'text-blue-600' :
+                          (score as number) >= 2 ? 'text-yellow-600' :
                           'text-orange-600'
                         }`}>
                           {score}/5
@@ -457,6 +472,7 @@ export default function YardAIPage() {
               </div>
               <div className="p-6">
                 <div className="aspect-video bg-gray-100 rounded-2xl overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={uploadedImage}
                     alt="Your uploaded backyard"
@@ -606,6 +622,7 @@ export default function YardAIPage() {
                 </div>
                 <div className="p-6">
                   <div className="aspect-video bg-gray-100 rounded-2xl overflow-hidden relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={uploadedImage}
                       alt="Your uploaded backyard being analyzed"
@@ -697,6 +714,7 @@ export default function YardAIPage() {
                       Before
                     </div>
                     <div className="h-96 bg-gray-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={uploadedImage}
                         alt="Before transformation"
@@ -716,6 +734,7 @@ export default function YardAIPage() {
                       <Maximize2 className="w-5 h-5" />
                     </div>
                     <div className="h-96 bg-gray-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={generatedImages[0]}
                         alt="After transformation"
@@ -803,6 +822,7 @@ export default function YardAIPage() {
                 <X className="w-6 h-6" />
               </button>
             </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={expandedImage}
               alt="Expanded dream yard design"
